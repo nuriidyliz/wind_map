@@ -3,10 +3,29 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Path2D;
 
-public class MainScreen extends JComponent{
+public class MainScreen extends JPanel implements Runnable {
+    static JFrame frame = new JFrame("Wind Map");
+    static MainScreen scene = new MainScreen();
+    static Mapp map=new Mapp();
     Path2D.Double arrow = createArrow();
     double theta = 0;
-    Mapp map=new Mapp();
+    @Override
+    public void run() {
+        while (true){
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            map.rewind();
+            map.setNeighborsTemp();
+            map.setDirection();
+            frame.repaint();
+        }
+
+    }
+
+
 
     private Path2D.Double createArrow() {
         int length = 20;
@@ -24,11 +43,11 @@ public class MainScreen extends JComponent{
         path.lineTo(x, y);
         return path;
     }
+    @Override
 
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+    public void paint(Graphics g) {
+        super.paint(g);
         g.setColor(Color.BLACK);
-
         for(int i = 0; i<=10; i++){
             for(int j=0; j<=10;j++){
                 g.drawLine(i*40,j*40,400,j*40);
@@ -37,7 +56,13 @@ public class MainScreen extends JComponent{
         }
         for(int i=0;i<map.cityList.size();i++){
 
-            drawArrow(g, map.cityList.get(i).x, map.cityList.get(i).y, map.cityList.get(i).direction);
+            if(map.cityList.get(i).direction==0){
+                g.setColor(Color.BLUE);
+                g.drawOval(map.cityList.get(i).x,map.cityList.get(i).y,3,3);
+            }
+            else {
+                drawArrow(g, map.cityList.get(i).x, map.cityList.get(i).y, map.cityList.get(i).direction);
+            }
         }
 
     }
@@ -46,8 +71,8 @@ public class MainScreen extends JComponent{
         Graphics2D g2 = (Graphics2D)gr;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         AffineTransform at = AffineTransform.getTranslateInstance(x,y);
-
-        theta = 0 + (dir*(Math.PI/8));
+       // System.out.println("scale" + scale);
+        theta = (dir-1)*(Math.PI/4);
         at.rotate(theta);
         at.scale(2.0, 2.0);
         Shape shape = at.createTransformedShape(arrow);
@@ -58,9 +83,8 @@ public class MainScreen extends JComponent{
 
 
     public static void main(String[]args){
-
-        MainScreen scene = new MainScreen();
-        JFrame frame = new JFrame("Wind Map");
+        Thread thread = new Thread(new MainScreen());
+        thread.start();
         frame.setSize(420,440);
         frame.add(scene);
         frame.setVisible(true);
